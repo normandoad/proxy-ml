@@ -1,39 +1,98 @@
 package mercadolibre.com.ar.proxy.controller.services;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import mercadolibre.com.ar.proxy.Proxy;
-
-
+import mercadolibre.com.ar.proxy.RequestHandler;
 
 @Component
 @Qualifier("ProxyService")
 public class ProxyService {
 
+	private static final Logger log = LogManager.getLogger(ProxyService.class);
+
 	private Boolean running = Boolean.FALSE;
+
+	private ServerSocket serverSocket;
 	
-	private Proxy myProxy;
+	private ExecutorService serverSocketThread;
 	
+	private final Integer maxThreadPool=50000;
 
 	public String listen(Integer port) {
-	
-		if(!running) {
-			running = Boolean.TRUE;
-			myProxy = new Proxy(port,running);
-			myProxy.listen();
-			
+
+		String message = "service iniciated";
+		try {
+			if (!running) {
+
+				serverSocket = new ServerSocket(port);
+
+				log.info("Waiting for client on port " + serverSocket.getLocalPort() + "..");
+
+				running = Boolean.TRUE;
+				serverSocketThread=Executors.newSingleThreadExecutor();
+				serverSocketThread.execute(() -> {
+					this.run();
+				});
+
+			} else
+				message = "The service is already iniciated";
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.info(e);
+			message = e.getMessage();
 		}
-		return "service iniciated";
+		return message;
 	}
 
 	public String stopListen() {
-		if(running) {
-			myProxy.closeServer();
-			running = Boolean.FALSE;
-		}else
-			return "The service is already stoped";
-		return "The service is stoped";
+		String message = "The service is stoped";
+		try {
+			if (running) {
+				serverSocket.close();
+				running = Boolean.FALSE;
+			} else
+				message = "The service is already stoped";
+
+		} catch (IOException e) {
+			log.error(e);
+			message = e.getMessage();
+		}
+		serverSocketThread.shutdownNow();
+		return message;
+	}
+
+	private void run() {
+		Thread.currentThread().setName("ProxyService-Thread");
+		ExecutorService thread = Executors.newFixedThreadPool(maxThreadPool);
+		Integer counter=0;
+		do {
+			try {
+				// serverSocket.accpet() Blocks until a connection is made
+				Socket socket = serverSocket.accept();
+
+				thread.submit(new RequestHandler(socket,counter));
+
+			} catch (SocketException e) {
+				// Socket exception is triggered by management system to shut down the proxy
+				log.info("Server closed");
+			} catch (IOException e) {
+				log.error(e);
+			}
+			if(counter>maxThreadPool)
+				counter=-1;
+			counter++;
+		} while (this.running);
+
+		thread.shutdownNow();
 	}
 }
