@@ -1,0 +1,11 @@
+stages:
+    - test
+    - createWar
+
+stage: createWar
+ script:
+    - mvn -Dmaven.test.skip clean install
+
+stage: test
+ script:
+    - mvn test
