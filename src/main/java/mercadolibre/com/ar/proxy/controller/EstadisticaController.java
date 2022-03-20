@@ -1,5 +1,7 @@
 package mercadolibre.com.ar.proxy.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -14,32 +16,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import mercadolibre.com.ar.proxy.controller.services.ProxyService;
+import mercadolibre.com.ar.proxy.controller.services.EstadisticaService;
+import mercadolibre.com.ar.proxy.model.Proxy;
 
 @RestController
 @Validated
-@RequestMapping("/proxyController")
-public class ProxyController {
+@RequestMapping("/estadisticaController")
+public class EstadisticaController {
+	
 	
 	@Autowired
-	private ProxyService proxyService;
+	private EstadisticaService estadisticaService;
 	
-	@GetMapping(value = "/initProxy/{port}")
-	@Operation(description = "init the proxy")
+	@GetMapping(value = "/findServiceProxyByPort/{port}")
+	@Operation(description = "search the service proxy/s by port number")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description  = "OK") })
 	@ResponseStatus(HttpStatus.OK)
-	public String  initProxy(@PathVariable(required = true) Integer port) throws JsonProcessingException{
+	public List<Proxy>  findServiceProxyByPort(@PathVariable(required = true) Integer port) throws JsonProcessingException{
 		
-		return proxyService.listen(port);
+		return estadisticaService.findProxyByPuerto(port);
 	}
-	
-	@GetMapping(value = "/stopProxy")
-	@Operation(description = "stop the proxy")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description  = "OK") })
-	@ResponseStatus(HttpStatus.OK)
-	public String  stopProxy() throws JsonProcessingException{
-		return proxyService.stopListen();
-	}
+
 }

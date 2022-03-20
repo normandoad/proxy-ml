@@ -55,16 +55,15 @@
 		</dependency>
 		<!-- mockserver -->
 		<dependency>
-		     <groupId>org.mock-server</groupId>
-		     <artifactId>mockserver-netty</artifactId>
-		     <version>5.13.0</version>
-		     <classifier>shaded</classifier>
+			<groupId>org.mock-server</groupId>
+			<artifactId>mockserver-netty</artifactId>
+			<version>5.13.0</version>
+			<classifier>shaded</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-
 		</dependency>
 	</dependencies>
 

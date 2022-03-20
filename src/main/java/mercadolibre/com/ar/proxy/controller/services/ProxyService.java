@@ -4,21 +4,28 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import mercadolibre.com.ar.proxy.RequestHandler;
+import mercadolibre.com.ar.proxy.model.Proxy;
 
 @Component
 @Qualifier("ProxyService")
 public class ProxyService {
 
 	private static final Logger log = LogManager.getLogger(ProxyService.class);
+	
+	@Autowired
+	private EstadisticaService estadisticaService;
 
 	private Boolean running = Boolean.FALSE;
 
@@ -26,14 +33,28 @@ public class ProxyService {
 	
 	private ExecutorService serverSocketThread;
 	
-	private final Integer maxThreadPool=50000;
+	private final Integer maxThreadPool=100000;
+	
+	private Proxy proxy=new Proxy();
+	
 
 	public String listen(Integer port) {
 
 		String message = "service iniciated";
 		try {
 			if (!running) {
-
+				
+				Date date=new Date();
+				
+				proxy.setFechaEncendido(new Date());
+				proxy.setPuerto(port);
+				List<Proxy>proxys=estadisticaService.findProxyByFechaApagadoIsNull();
+				
+				proxys.forEach(proxy2->{proxy2.setFechaApagado(date);proxy2.setExcepcion("unknown shutdown");});
+				
+//				proxys.add(proxy);
+				estadisticaService.saveAllProxy(proxys);
+				
 				serverSocket = new ServerSocket(port);
 
 				log.info("Waiting for client on port " + serverSocket.getLocalPort() + "..");
@@ -79,8 +100,8 @@ public class ProxyService {
 			try {
 				// serverSocket.accpet() Blocks until a connection is made
 				Socket socket = serverSocket.accept();
-
-				thread.submit(new RequestHandler(socket,counter));
+				
+				thread.submit(new RequestHandler(socket,counter,proxy));
 
 			} catch (SocketException e) {
 				// Socket exception is triggered by management system to shut down the proxy

@@ -23,4 +23,4 @@ RUN    unzip "webapps/${WAR_FILENAME}" -d "webapps/${SERVICE_NAME}"
 RUN rm -f "webapps/${WAR_FILENAME}"
 
 # Expose necessary port
-EXPOSE 8080
+EXPOSE 8000-8999
