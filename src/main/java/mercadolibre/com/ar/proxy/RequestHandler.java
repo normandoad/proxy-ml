@@ -6,11 +6,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -21,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import mercadolibre.com.ar.proxy.controller.serviceslocators.ServiceLocator;
 import mercadolibre.com.ar.proxy.model.Cliente;
 import mercadolibre.com.ar.proxy.model.Consulta;
-import mercadolibre.com.ar.proxy.model.Proxy;
 
 public class RequestHandler implements Runnable {
 
@@ -34,21 +34,22 @@ public class RequestHandler implements Runnable {
 	private Cliente cliente;// se guarda todo con el cliente
 	private Consulta consulta = new Consulta();
 
-	public RequestHandler(final Socket socket,final Integer counter,final Proxy proxy) {
+	public RequestHandler(final Socket socket, final Integer counter, final String proxyId) {
 
 		this.clientSocket = socket;
 		try {
 			this.clientSocket.setSoTimeout(2000);
 
-			String ip = this.clientSocket.getRemoteSocketAddress().toString();
+			String ip = ((InetSocketAddress) socket.getRemoteSocketAddress()).getAddress().getHostAddress();
+
+			ip = StringUtils.equals("0:0:0:0:0:0:0:1", ip) ? "127.0.0.1" : ip;// ipv6
 
 			this.consulta.setFechaInicio(new Date());
 			this.cliente = ServiceLocator.getEstadisticaService().findClienteByIp(ip);
 			if (this.cliente == null) {
 				this.cliente = new Cliente();
 				this.cliente.setIp(ip);
-				this.cliente.setProxys(new HashSet<Proxy>());
-				this.cliente.getProxys().add(proxy);
+				this.cliente.setIdProxy(proxyId);
 			}
 
 		} catch (IOException e) {
@@ -61,6 +62,8 @@ public class RequestHandler implements Runnable {
 	@Override
 	public void run() {
 
+		Boolean consultaPP = Boolean.FALSE;
+
 		try {
 
 			BufferedReader proxyToClientBr = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -72,26 +75,37 @@ public class RequestHandler implements Runnable {
 				// Get the Request type
 
 				String[] requestSplitted = StringUtils.split(requestString, " ");
-				String response = this.executeHttp(requestSplitted[0], MERCADOLIBREAPIURL.concat(requestSplitted[1]),
-						requestSplitted[2]);
+				this.consulta.setPathConsulta(requestSplitted[1]);
+				this.consulta.setFechaInicioConsultaMeli(new Date());
+
+				consultaPP = !StringUtils.containsIgnoreCase("/favicon.ico", requestSplitted[1]);
+
+				if (consultaPP) {
+					String response = this.executeHttp(requestSplitted[0],
+							MERCADOLIBREAPIURL.concat(requestSplitted[1]), requestSplitted[2]);
 //				String response = this.execWithCurl(requestSplitted[0],MERCADOLIBREAPIURL.concat(requestSplitted[1]),requestSplitted[2]);
 
-				proxyToClientBw.write(response);
-				proxyToClientBw.flush();
-				proxyToClientBw.close();
+					this.consulta.setFechaFinConsultaMeli(new Date());
+					proxyToClientBw.write(response);
+					proxyToClientBw.flush();
+					proxyToClientBw.close();
+				}
 
 			}
 
 		} catch (IOException e) {
 			log.error(e);
 		} finally {
-//			cliente.setId(UUID.randomUUID().toString());
-			this.consulta.setFechaFin(new Date());
-			this.consulta.setPathConsulta("bbbbbbb");
-			ServiceLocator.getEstadisticaService().saveCliente(cliente);
-			consulta.setIdCliente(cliente.getId());
-			ServiceLocator.getEstadisticaService().saveConsulta(consulta);
-		}	
+			if (consultaPP) {
+
+				Executors.newSingleThreadExecutor().execute(() -> {
+					this.consulta.setFechaFin(new Date());
+					ServiceLocator.getEstadisticaService().saveCliente(cliente);
+					consulta.setIdCliente(cliente.getId());
+					ServiceLocator.getEstadisticaService().saveConsulta(consulta);
+				});
+			}
+		}
 	}
 
 	@SuppressWarnings("unused")

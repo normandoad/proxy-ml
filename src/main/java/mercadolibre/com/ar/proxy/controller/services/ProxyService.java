@@ -11,11 +11,11 @@ import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import mercadolibre.com.ar.proxy.RequestHandler;
+import mercadolibre.com.ar.proxy.controller.serviceslocators.ServiceLocator;
 import mercadolibre.com.ar.proxy.model.Proxy;
 
 @Component
@@ -24,9 +24,6 @@ public class ProxyService {
 
 	private static final Logger log = LogManager.getLogger(ProxyService.class);
 	
-	@Autowired
-	private EstadisticaService estadisticaService;
-
 	private Boolean running = Boolean.FALSE;
 
 	private ServerSocket serverSocket;
@@ -48,12 +45,11 @@ public class ProxyService {
 				
 				proxy.setFechaEncendido(new Date());
 				proxy.setPuerto(port);
-				List<Proxy>proxys=estadisticaService.findProxyByFechaApagadoIsNull();
+				List<Proxy>proxys=ServiceLocator.getEstadisticaService().findProxyByFechaApagadoIsNull();
 				
 				proxys.forEach(proxy2->{proxy2.setFechaApagado(date);proxy2.setExcepcion("unknown shutdown");});
-				
-//				proxys.add(proxy);
-				estadisticaService.saveAllProxy(proxys);
+				proxys.add(proxy);
+				ServiceLocator.getEstadisticaService().saveAllProxy(proxys);
 				
 				serverSocket = new ServerSocket(port);
 
@@ -101,7 +97,7 @@ public class ProxyService {
 				// serverSocket.accpet() Blocks until a connection is made
 				Socket socket = serverSocket.accept();
 				
-				thread.submit(new RequestHandler(socket,counter,proxy));
+				thread.submit(new RequestHandler(socket,counter,proxy.getId()));
 
 			} catch (SocketException e) {
 				// Socket exception is triggered by management system to shut down the proxy

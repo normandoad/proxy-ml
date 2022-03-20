@@ -37,6 +37,10 @@ public class Consulta implements Serializable{
     private Date fechaInicio;
     @NotNull
     private Date fechaFin;
+    @NotNull
+    private Date fechaInicioConsultaMeli;
+    @NotNull
+    private Date fechaFinConsultaMeli;
     private String excepcion;
 	
 }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -40,8 +41,7 @@ public class Proxy implements Serializable{
     private Date fechaEncendido;
     private Date fechaApagado;
     private String excepcion;
-	
-    @OneToMany(mappedBy="proxys",fetch = FetchType.EAGER)
-	private Set<Cliente> clientes;
+    @OneToMany(mappedBy = "idProxy", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+	private Set<Cliente> cliente;
 
 }

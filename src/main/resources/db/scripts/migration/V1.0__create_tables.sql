@@ -11,6 +11,8 @@ CREATE TABLE consulta (
   pathconsulta VARCHAR(255) NOT NULL,
   fechainicio TIMESTAMP NOT NULL,
   fechafin TIMESTAMP DEFAULT NULL,
+  fechainicioconsultameli TIMESTAMP NOT NULL,
+  fechafinconsultameli TIMESTAMP NOT NULL,
   excepcion VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY(id)
 );
@@ -21,23 +23,12 @@ CREATE TABLE proxy (
   fechaencendido TIMESTAMP NOT NULL,
   fechaapagado TIMESTAMP DEFAULT NULL,
   excepcion VARCHAR(255) DEFAULT NULL,
-  idcliente VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY(id)
 );
-
-
-CREATE TABLE clientesproxys(
-idproxy VARCHAR(255) NOT NULL,
-idcliente VARCHAR(255) NOT NULL,
-PRIMARY KEY(idcliente,idproxy)
-);
-
- ALTER TABLE clientesproxys
-    ADD FOREIGN KEY (idcliente) REFERENCES cliente(id),
-     ADD FOREIGN KEY (idproxy) REFERENCES proxy(id);
  
-    
  ALTER TABLE consulta
-    ADD FOREIGN KEY (idcliente) REFERENCES cliente(id);  
+    ADD FOREIGN KEY (idcliente) REFERENCES cliente(id);
+ ALTER TABLE cliente  
+    ADD FOREIGN KEY (idproxy) REFERENCES proxy(id);
 
    
