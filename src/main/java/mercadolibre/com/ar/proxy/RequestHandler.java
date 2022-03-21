@@ -46,7 +46,7 @@ public class RequestHandler implements Runnable {
 			ip = StringUtils.equals("127.0.0.1", ip) ? "0:0:0:0:0:0:0:1" : ip;// ipv6
 
 			this.query.setInitDate(new Date());
-			this.cliente = ServiceLocator.getEstadisticsService().findClienteByIpAndIdProxy(ip,idProxy);
+			this.cliente = ServiceLocator.getDataBaseService().findClienteByIpAndIdProxy(ip,idProxy);
 			if (this.cliente == null) {
 				this.cliente = new Client();
 				this.cliente.setIp(ip);
@@ -101,9 +101,9 @@ public class RequestHandler implements Runnable {
 
 				Executors.newSingleThreadExecutor().execute(() -> {
 					this.query.setEndDate(new Date());
-					ServiceLocator.getEstadisticsService().saveClient(cliente);
+					ServiceLocator.getDataBaseService().saveClient(cliente);
 					query.setIdClient(cliente.getId());
-					ServiceLocator.getEstadisticsService().saveQuery(query);
+					ServiceLocator.getDataBaseService().saveQuery(query);
 				});
 			}
 		}

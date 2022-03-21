@@ -12,5 +12,6 @@ public class ClientStatistic implements Serializable{
 	
 	private Integer cantQuerys;
 	private Period totalQueryTime;
+	private Period totalMeliRequestTime;
 
 }
