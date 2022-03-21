@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -20,8 +21,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import mercadolibre.com.ar.proxy.controller.serviceslocators.ServiceLocator;
-import mercadolibre.com.ar.proxy.model.Cliente;
-import mercadolibre.com.ar.proxy.model.Consulta;
+import mercadolibre.com.ar.proxy.model.Client;
+import mercadolibre.com.ar.proxy.model.Query;
 
 public class RequestHandler implements Runnable {
 
@@ -31,10 +32,10 @@ public class RequestHandler implements Runnable {
 
 	private static final String MERCADOLIBREAPIURL = "https://api.mercadolibre.com";
 
-	private Cliente cliente;// se guarda todo con el cliente
-	private Consulta consulta = new Consulta();
+	private Client cliente;// se guarda todo con el cliente
+	private Query query = new Query();
 
-	public RequestHandler(final Socket socket, final Integer counter, final String proxyId) {
+	public RequestHandler(final Socket socket, final Integer counter, final UUID idProxy) {
 
 		this.clientSocket = socket;
 		try {
@@ -42,14 +43,14 @@ public class RequestHandler implements Runnable {
 
 			String ip = ((InetSocketAddress) socket.getRemoteSocketAddress()).getAddress().getHostAddress();
 
-			ip = StringUtils.equals("0:0:0:0:0:0:0:1", ip) ? "127.0.0.1" : ip;// ipv6
+			ip = StringUtils.equals("127.0.0.1", ip) ? "0:0:0:0:0:0:0:1" : ip;// ipv6
 
-			this.consulta.setFechaInicio(new Date());
-			this.cliente = ServiceLocator.getEstadisticaService().findClienteByIp(ip);
+			this.query.setInitDate(new Date());
+			this.cliente = ServiceLocator.getEstadisticsService().findClienteByIpAndIdProxy(ip,idProxy);
 			if (this.cliente == null) {
-				this.cliente = new Cliente();
+				this.cliente = new Client();
 				this.cliente.setIp(ip);
-				this.cliente.setIdProxy(proxyId);
+				this.cliente.setIdProxy(idProxy);
 			}
 
 		} catch (IOException e) {
@@ -62,7 +63,7 @@ public class RequestHandler implements Runnable {
 	@Override
 	public void run() {
 
-		Boolean consultaPP = Boolean.FALSE;
+		Boolean queryPP = Boolean.FALSE;
 
 		try {
 
@@ -75,17 +76,17 @@ public class RequestHandler implements Runnable {
 				// Get the Request type
 
 				String[] requestSplitted = StringUtils.split(requestString, " ");
-				this.consulta.setPathConsulta(requestSplitted[1]);
-				this.consulta.setFechaInicioConsultaMeli(new Date());
+				this.query.setQueryPath(requestSplitted[1]);
+				this.query.setInitDateMeliRequest(new Date());
 
-				consultaPP = !StringUtils.containsIgnoreCase("/favicon.ico", requestSplitted[1]);
+				queryPP = !StringUtils.containsIgnoreCase("/favicon.ico", requestSplitted[1]);
 
-				if (consultaPP) {
+				if (queryPP) {
 					String response = this.executeHttp(requestSplitted[0],
 							MERCADOLIBREAPIURL.concat(requestSplitted[1]), requestSplitted[2]);
 //				String response = this.execWithCurl(requestSplitted[0],MERCADOLIBREAPIURL.concat(requestSplitted[1]),requestSplitted[2]);
 
-					this.consulta.setFechaFinConsultaMeli(new Date());
+					this.query.setEndDateMeliRequest(new Date());
 					proxyToClientBw.write(response);
 					proxyToClientBw.flush();
 					proxyToClientBw.close();
@@ -96,13 +97,13 @@ public class RequestHandler implements Runnable {
 		} catch (IOException e) {
 			log.error(e);
 		} finally {
-			if (consultaPP) {
+			if (queryPP) {
 
 				Executors.newSingleThreadExecutor().execute(() -> {
-					this.consulta.setFechaFin(new Date());
-					ServiceLocator.getEstadisticaService().saveCliente(cliente);
-					consulta.setIdCliente(cliente.getId());
-					ServiceLocator.getEstadisticaService().saveConsulta(consulta);
+					this.query.setEndDate(new Date());
+					ServiceLocator.getEstadisticsService().saveClient(cliente);
+					query.setIdClient(cliente.getId());
+					ServiceLocator.getEstadisticsService().saveQuery(query);
 				});
 			}
 		}

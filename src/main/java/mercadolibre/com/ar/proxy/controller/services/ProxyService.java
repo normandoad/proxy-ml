@@ -43,13 +43,13 @@ public class ProxyService {
 				
 				Date date=new Date();
 				
-				proxy.setFechaEncendido(new Date());
-				proxy.setPuerto(port);
-				List<Proxy>proxys=ServiceLocator.getEstadisticaService().findProxyByFechaApagadoIsNull();
+				proxy.setInitDate(date);
+				proxy.setPort(port);
+				List<Proxy>proxys=ServiceLocator.getEstadisticsService().findByEndDateIsNull();
 				
-				proxys.forEach(proxy2->{proxy2.setFechaApagado(date);proxy2.setExcepcion("unknown shutdown");});
+				proxys.forEach(proxy2->{proxy2.setEndDate(date);proxy2.setException("unknown shutdown");});
 				proxys.add(proxy);
-				ServiceLocator.getEstadisticaService().saveAllProxy(proxys);
+				ServiceLocator.getEstadisticsService().saveAllProxy(proxys);
 				
 				serverSocket = new ServerSocket(port);
 
@@ -85,6 +85,8 @@ public class ProxyService {
 			message = e.getMessage();
 		}
 		serverSocketThread.shutdownNow();
+		this.proxy.setEndDate(new Date());
+		ServiceLocator.getEstadisticsService().saveProxy(proxy);
 		return message;
 	}
 
