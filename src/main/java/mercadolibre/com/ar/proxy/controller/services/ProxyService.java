@@ -8,6 +8,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,10 +33,12 @@ public class ProxyService {
 	
 	private ExecutorService serverSocketThread;
 	
-	private final Integer maxThreadPool=100000;
+	private final Integer maxThreadPool=50000;
+	private final Long keepAliveTime=7L;
 	
 	private Proxy proxy=new Proxy();
 	
+	private Integer port;
 
 	public String listen(Integer port) {
 
@@ -42,6 +47,8 @@ public class ProxyService {
 			if (!running) {
 				
 				Date date=new Date();
+				
+				this.port=port;
 				
 				proxy.setInitDate(date);
 				proxy.setPort(port);
@@ -86,20 +93,23 @@ public class ProxyService {
 		}
 		serverSocketThread.shutdownNow();
 		this.proxy.setEndDate(new Date());
+		this.proxy.setException("stopped by de user");
 		ServiceLocator.getDataBaseService().saveProxy(proxy);
 		return message;
 	}
 
 	private void run() {
 		Thread.currentThread().setName("ProxyService-Thread");
-		ExecutorService thread = Executors.newFixedThreadPool(maxThreadPool);
+		ThreadPoolExecutor thread = new ThreadPoolExecutor(0, maxThreadPool,keepAliveTime, TimeUnit.SECONDS,new SynchronousQueue<Runnable>());
 		Integer counter=0;
 		do {
 			try {
 				// serverSocket.accpet() Blocks until a connection is made
+				if(serverSocket.isClosed())
+					serverSocket = new ServerSocket(this.port);
 				Socket socket = serverSocket.accept();
+					thread.submit(new RequestHandler(socket,counter,proxy.getId()));
 				
-				thread.submit(new RequestHandler(socket,counter,proxy.getId()));
 
 			} catch (SocketException e) {
 				// Socket exception is triggered by management system to shut down the proxy
