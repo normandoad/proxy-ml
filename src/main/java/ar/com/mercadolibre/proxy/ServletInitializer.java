@@ -1,4 +1,4 @@
-package mercadolibre.com.ar.proxy;
+package ar.com.mercadolibre.proxy;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;

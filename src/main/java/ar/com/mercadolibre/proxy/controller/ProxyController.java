@@ -1,4 +1,4 @@
-package mercadolibre.com.ar.proxy.controller;
+package ar.com.mercadolibre.proxy.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,7 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import mercadolibre.com.ar.proxy.controller.services.ProxyService;
+import ar.com.mercadolibre.proxy.controller.services.ProxyService;
 
 @RestController
 @Validated

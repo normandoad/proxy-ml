@@ -1,4 +1,4 @@
-package mercadolibre.com.ar.proxy;
+package ar.com.mercadolibre.proxy;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import mercadolibre.com.ar.proxy.controller.services.ProxyService;
+import ar.com.mercadolibre.proxy.controller.services.ProxyService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest

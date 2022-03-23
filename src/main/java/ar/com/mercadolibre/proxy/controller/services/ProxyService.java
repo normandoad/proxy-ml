@@ -1,4 +1,4 @@
-package mercadolibre.com.ar.proxy.controller.services;
+package ar.com.mercadolibre.proxy.controller.services;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,9 +17,9 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import mercadolibre.com.ar.proxy.RequestHandler;
-import mercadolibre.com.ar.proxy.controller.serviceslocators.ServiceLocator;
-import mercadolibre.com.ar.proxy.model.Proxy;
+import ar.com.mercadolibre.commons.locators.ServiceLocator;
+import ar.com.mercadolibre.commons.model.Proxy;
+import ar.com.mercadolibre.proxy.handlers.RequestHandler;
 
 @Component
 @Qualifier("ProxyService")

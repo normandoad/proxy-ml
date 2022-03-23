@@ -1,4 +1,4 @@
-package mercadolibre.com.ar.proxy;
+package ar.com.mercadolibre.proxy.handlers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -25,9 +25,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import mercadolibre.com.ar.proxy.controller.serviceslocators.ServiceLocator;
-import mercadolibre.com.ar.proxy.model.Client;
-import mercadolibre.com.ar.proxy.model.Query;
+import ar.com.mercadolibre.commons.locators.ServiceLocator;
+import ar.com.mercadolibre.commons.model.Client;
+import ar.com.mercadolibre.commons.model.Query;
+
 
 @SuppressWarnings("static-access")
 public class RequestHandler implements Runnable {
@@ -40,10 +41,10 @@ public class RequestHandler implements Runnable {
 			1, TimeUnit.SECONDS);
 
 	private static final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, Boolean> expirationPolicyQueryPathAndIp = new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(
-			2, TimeUnit.SECONDS);
+			3, TimeUnit.SECONDS);
 	
 	private static final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, Integer> expirationPolicyQueryPath = new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(
-			5, TimeUnit.SECONDS);
+			7, TimeUnit.SECONDS);
 
 	private static volatile Map<String, Integer> rateLimitByIp = Collections.synchronizedMap(
 			new PassiveExpiringMap<String, Integer>(expirationPolicyIp, new HashMap<String, Integer>()));
@@ -67,7 +68,7 @@ public class RequestHandler implements Runnable {
 
 			this.ip = ((InetSocketAddress) this.clientSocket.getRemoteSocketAddress()).getAddress().getHostAddress();
 
-			this.clientSocket.setSoTimeout(7000);
+			this.clientSocket.setSoTimeout(12000);
 
 			this.query.setInitDate(new Date());
 			this.cliente = ServiceLocator.getDataBaseService().findClienteByIpAndIdProxy(ip, idProxy);
