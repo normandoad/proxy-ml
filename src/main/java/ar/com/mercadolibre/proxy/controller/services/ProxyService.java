@@ -20,56 +20,57 @@ import org.springframework.stereotype.Component;
 import ar.com.mercadolibre.commons.locators.ServiceLocator;
 import ar.com.mercadolibre.commons.model.Proxy;
 import ar.com.mercadolibre.proxy.handlers.RequestHandler;
+import ar.com.mercadolibre.proxy.locators.ProxyPropertiesLocator;
 
 @Component
 @Qualifier("ProxyService")
 public class ProxyService {
 
 	private static final Logger log = LogManager.getLogger(ProxyService.class);
-	
+
 	private Boolean running = Boolean.FALSE;
 
 	private ServerSocket serverSocket;
-	
+
 	private ExecutorService serverSocketThread;
-	
-	private final Integer maxThreadPool=50000;
-	private final Long keepAliveTime=7L;
-	
-	private Proxy proxy=new Proxy();
-	
+
+	private Proxy proxy = new Proxy();
+
 	private Integer port;
 
 	public String listen(Integer port) {
 
-		String message = "service iniciated";
+		String message = ProxyPropertiesLocator.getStringProperties().getInitiated();
 		try {
 			if (!running) {
-				
-				Date date=new Date();
-				
-				this.port=port;
-				
+
+				Date date = new Date();
+
+				this.port = port;
+
 				proxy.setInitDate(date);
 				proxy.setPort(port);
-				List<Proxy>proxys=ServiceLocator.getDataBaseService().findByEndDateIsNull();
-				
-				proxys.forEach(proxy2->{proxy2.setEndDate(date);proxy2.setException("unknown shutdown");});
+				List<Proxy> proxys = ServiceLocator.getDataBaseService().findByEndDateIsNull();
+
+				proxys.forEach(proxy2 -> {
+					proxy2.setEndDate(date);
+					proxy2.setException(ProxyPropertiesLocator.getStringProperties().getUnknownShutdown());
+				});
 				proxys.add(proxy);
 				ServiceLocator.getDataBaseService().saveAllProxy(proxys);
-				
+
 				serverSocket = new ServerSocket(port);
 
-				log.info("Waiting for client on port " + serverSocket.getLocalPort() + "..");
+				log.info(ProxyPropertiesLocator.getStringProperties().getWaiting() + " " + serverSocket.getLocalPort() + "..");
 
 				running = Boolean.TRUE;
-				serverSocketThread=Executors.newSingleThreadExecutor();
+				serverSocketThread = Executors.newSingleThreadExecutor();
 				serverSocketThread.execute(() -> {
 					this.run();
 				});
 
 			} else
-				message = "The service is already iniciated";
+				message = ProxyPropertiesLocator.getStringProperties().getAlreadyIniciated();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			log.info(e);
@@ -79,13 +80,13 @@ public class ProxyService {
 	}
 
 	public String stopListen() {
-		String message = "The service is stoped";
+		String message = ProxyPropertiesLocator.getStringProperties().getServiceIsStoped();
 		try {
 			if (running) {
 				serverSocket.close();
 				running = Boolean.FALSE;
 			} else
-				message = "The service is already stoped";
+				message = ProxyPropertiesLocator.getStringProperties().getServiceIsAlreadyStoped();
 
 		} catch (IOException e) {
 			log.error(e);
@@ -93,32 +94,32 @@ public class ProxyService {
 		}
 		serverSocketThread.shutdownNow();
 		this.proxy.setEndDate(new Date());
-		this.proxy.setException("stopped by de user");
+		this.proxy.setException(ProxyPropertiesLocator.getStringProperties().getStoppedByTheUser());
 		ServiceLocator.getDataBaseService().saveProxy(proxy);
 		return message;
 	}
 
 	private void run() {
-		Thread.currentThread().setName("ProxyService-Thread");
-		ThreadPoolExecutor thread = new ThreadPoolExecutor(0, maxThreadPool,keepAliveTime, TimeUnit.SECONDS,new SynchronousQueue<Runnable>());
-		Integer counter=0;
+		Thread.currentThread().setName(ProxyPropertiesLocator.getStringProperties().getProxyServiceThread());
+		ThreadPoolExecutor thread = new ThreadPoolExecutor(0, ProxyPropertiesLocator.getProperties().getMaxThreadPool(),
+				ProxyPropertiesLocator.getProperties().getKeepAliveTime(), TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+		Integer counter = 0;
 		do {
 			try {
 				// serverSocket.accpet() Blocks until a connection is made
-				if(serverSocket.isClosed())
+				if (serverSocket.isClosed())
 					serverSocket = new ServerSocket(this.port);
 				Socket socket = serverSocket.accept();
-					thread.submit(new RequestHandler(socket,counter,proxy.getId()));
-				
+				thread.submit(new RequestHandler(socket, counter, proxy.getId(), thread.getPoolSize()));
 
 			} catch (SocketException e) {
 				// Socket exception is triggered by management system to shut down the proxy
-				log.info("Server closed");
+				log.info(ProxyPropertiesLocator.getStringProperties().getServerClosed());
 			} catch (IOException e) {
 				log.error(e);
 			}
-			if(counter>maxThreadPool)
-				counter=-1;
+			if (counter > ProxyPropertiesLocator.getProperties().getMaxThreadPool())
+				counter = -1;
 			counter++;
 		} while (this.running);
 
