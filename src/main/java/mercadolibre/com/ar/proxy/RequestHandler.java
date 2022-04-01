@@ -266,7 +266,7 @@ public class RequestHandler implements Runnable {
 					+ "Proxy-agent: ProxyService/1.0\n" + "\r\n");
 			log.error(e);
 		} finally {
-			if (StringUtils.isNoneEmpty(response.toString()))
+			if (StringUtils.isEmpty(response.toString()))
 				response.append(httpVer + " " + HttpURLConnection.HTTP_NO_CONTENT + " no content\n"
 						+ "Proxy-agent: ProxyService/1.0\n" + "\r\n");
 		}
