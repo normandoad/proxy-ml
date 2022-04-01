@@ -8,6 +8,8 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -23,8 +25,9 @@ import lombok.Data;
 public class Client implements Serializable {
 
 	@Id
-	@Column(name = "id", columnDefinition = "UUID")
-	private UUID id=UUID.randomUUID();
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "id", columnDefinition = "UUID",updatable = false, unique = true, nullable = false)
+	private UUID id;
 	@NotBlank
 	private String ip;
 	@NotNull
